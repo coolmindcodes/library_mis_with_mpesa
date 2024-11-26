@@ -1,0 +1,30 @@
+{% extends 'master.html' %}
+{% load crispy_forms_filters %}
+{% load static %}
+
+{% block content %}
+    <h1 class="h3 mb-2 text-gray-800">Issue Book</h1>
+    <p class="mb-4">{{ book.title }}</p>
+    <!-- DataTales Example -->
+    <div class="row">
+        <div class="col-sm-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">By {{ book.author }} ISBN {{ book.isbn }}</h6>
+                </div>
+                <div class="card-body">
+                    <form action="" method="post">
+                        {% csrf_token %}
+                        <label for="student">Select Student</label>
+                        <select id="student" name="student" class="form-select w-100 mb-4">
+                           {% for student in students %}
+                               <option value="{{ student.id }}">{{ student.admission_no }} - {{ student.name }} -</option>
+                           {% endfor %}
+                        </select>
+                        <button class="btn btn-outline-info">Issue Book</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
