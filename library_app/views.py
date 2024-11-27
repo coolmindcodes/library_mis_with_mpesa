@@ -3,6 +3,8 @@ import os
 from datetime import date, timedelta
 
 from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.db.models.expressions import result
 from django.db.models.functions import TruncMonth
@@ -11,9 +13,10 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django_daraja.mpesa.core import MpesaClient
 
+from library_app.app_forms import LoginForm
 from library_app.models import Book, Student, Borrow, FinePayment
 
-
+@login_required
 # Create your views here.
 def testing(request):
     # book1 = Book.objects.create(title="Introduction to Statistics", author="Tom Juma", year=1999, subject="Maths", isbn="123456")
@@ -47,12 +50,12 @@ def testing(request):
     print(borrowings)
     return render(request, 'index.html')
 
-
+@login_required
 def index(request):
     books = Book.objects.all()
     return render(request, 'index.html', {'books': books})
 
-
+@login_required
 def issue(request, book_id):
     book = get_object_or_404(Book, pk=book_id)
     students = Student.objects.all()
@@ -68,12 +71,12 @@ def issue(request, book_id):
         return redirect('home')
     return render(request, 'borrow.html', {'book': book, 'students': students})
 
-
+@login_required
 def borrowed_books(request):
     borrowed_items = Borrow.objects.filter(status='BORROWED')
     return render(request, 'borrowed_books.html', {'borrowed_items': borrowed_items})
 
-
+@login_required
 def return_item(request, borrowed_id):
     returned_borrow = get_object_or_404(Borrow, pk=borrowed_id)
     returned_borrow.return_date = date.today()
@@ -87,11 +90,11 @@ def return_item(request, borrowed_id):
                      f'{returned_borrow.book.title} by {returned_borrow.book.author} was returned successfully')
     return redirect('borrowed_books')
 
-
+@login_required
 def dashboard(request):
     return render(request, 'stats.html')
 
-
+@login_required
 def pie_chart_data(request):
     books = Borrow.objects.filter(created_at__year=2024)
     returned = books.filter(status='RETURNED').count()
@@ -113,7 +116,7 @@ def pie_chart_data(request):
         },
     })
 
-
+@login_required
 def area_chart_data(request):
     books = Borrow.objects.filter(created_at__year=2024)
     grouped_stats = (books.annotate(month=TruncMonth('created_at')).values('month')
@@ -147,7 +150,7 @@ def area_chart_data(request):
         }
     })
 
-
+@login_required
 def bar_chart_data(request):
     books = Borrow.objects.filter(created_at__year=2024)
     grouped_stats = (books.annotate(month=TruncMonth('created_at')).values('month')
@@ -173,6 +176,7 @@ def bar_chart_data(request):
         }
     })
 
+@login_required
 def pay_fine(request, id):
     item = Borrow.objects.get(pk=id)
     total = item.fine_total
@@ -190,7 +194,7 @@ def pay_fine(request, id):
        payment.save()
        messages.success(request, f'M-PESA payment initiated successfully for account {account_reference}')
     return redirect('returns')
-
+@login_required
 def returns(request):
     borrowed_items = Borrow.objects.filter(status__icontains='Returned')
     return render(request, 'returns.html', {'borrowed_items': borrowed_items})
@@ -210,3 +214,26 @@ def callback(request):
             payment.status = "COMPLETED"
             payment.save()
     return HttpResponse("OK")
+
+
+
+def login_user(request):
+    if request.method == "GET":
+        form = LoginForm()
+        return render(request, "login.html", {"form": form})
+    elif request.method == "POST":
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            user = authenticate(request, username=username, password=password)
+            if user:
+                login(request, user) # sessions # cookies
+                return redirect('dashboard')
+        messages.error(request, "Invalid username or password")
+        return render(request, "login.html", {"form": form})
+
+@login_required
+def signout_user(request):
+    logout(request)
+    return redirect('login')

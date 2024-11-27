@@ -153,7 +153,7 @@ MESSAGE_TAGS = {
     messages.DEBUG: "alert-dark",
 }
 
-# LOGIN_URL = "/login"
+LOGIN_URL = "/login"
 
 
 MPESA_ENVIRONMENT = 'sandbox'

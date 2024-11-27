@@ -31,5 +31,7 @@ urlpatterns = [
     path('fine/payment/<int:id>', views.pay_fine, name='pay_fine'),
     path('callback', views.callback, name='callback'),
     path('returns', views.returns, name='returns'),
+    path('login', views.login_user, name='login'),
+    path('logout', views.signout_user, name='logout'),
     path('admin/', admin.site.urls),
 ]
